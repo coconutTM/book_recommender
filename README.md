@@ -19,19 +19,19 @@ playwright install chromium
 ---
 ## วิธีใช้งาน
 
-### ขั้นที่ 1 — ดึงข้อมูลหนังสือ
+### ขั้นที่ 1: ดึงข้อมูลหนังสือ
 ```bash
 python src/scraper.py
 ```
 จะได้ไฟล์ `data/books.csv`
 
-### ขั้นที่ 2 — ทำความสะอาดข้อมูล
+### ขั้นที่ 2: ทำความสะอาดข้อมูล
 ```bash
 python src/cleaner.py
 ```
 จะได้ไฟล์ `data/books_cleaned.csv`
 
-### ขั้นที่ 3 — รันระบบแนะนำหนังสือ
+### ขั้นที่ 3: รันระบบแนะนำหนังสือ
 ```bash
 python src/recommender.py
 ```
