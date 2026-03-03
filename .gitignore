@@ -1,0 +1,18 @@
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv
+
+# Lock File 
+*.lock 
+
+# Data file 
+data/books.csv
+data/books_cleaned.csv
+
+# Browse cache
+downloaded_files/
+src/downloaded_files/
+EOF
