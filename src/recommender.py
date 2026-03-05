@@ -3,25 +3,10 @@ import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# โหลดข้อมูล
-# df = pd.read_csv("data/books_cleaned.csv")
-df = pd.read_csv(os.path.join("data", "books_cleaned.csv"))
-# รวม title + description เป็น text เดียว
-df["content"] = df["title"] + " " + df["description"]
-df["content"] = df["content"].fillna("")
-
-# สร้าง TF-IDF Metrix
-vectorizer = TfidfVectorizer()
-tfidf_metrix = vectorizer.fit_transform(df["content"])
-
-print(f"\nโหลดข้อมูลหนังสือเกี่ยวกับ computer ทั้งหมด {len(df)} เล่ม!")
-
 
 # Function recommend!!
-
-
 # แนะนำตามความสนใจ
-def recommend_by_interest(query, top_n=10):
+def recommend_by_interest(query, df, vectorizer, tfidf_metrix, top_n=10):
     # แปลงเป็น vector เพื่อคำนวณ
     query_vec = vectorizer.transform([query])
 
@@ -41,7 +26,7 @@ def recommend_by_interest(query, top_n=10):
 
 
 # แนะนำตามหนังสือที่สนใจ
-def recommend_by_title(title, top_n=10):
+def recommend_by_title(title, df, vectorizer, tfidf_metrix, top_n=10):
     matches = df[df["title"].str.contains(title, case=False, na=False)]
 
     if matches.empty:
@@ -87,68 +72,84 @@ def print_results(results):
     print("-" * 50 + "\n")
 
 
-def search_book(title):
+def search_book(title, df):
     # ค้นหาหนังสือจากชื่อที่คล้ายกัน return dataframe
     matches = df[df["title"].str.contains(title, case=False, na=False)]
     return matches.reset_index()
 
 
-print("-" * 50)
-print("ระบบแนะนำหนังสือจากเว็บไซต์ 'naiin.com' ~~~")
-print("-" * 50)
-print("** พิมพ์ 'exit' เพื่อออก **")
-print()
+"""
+if __name__ == "__main__":
+    # โหลดข้อมูล
+    # df = pd.read_csv("data/books_cleaned.csv")
+    df = pd.read_csv(os.path.join("data", "books_cleaned.csv"))
+    # รวม title + description เป็น text เดียว
+    df["content"] = df["title"] + " " + df["description"]
+    df["content"] = df["content"].fillna("")
 
-while True:
-    print("\nเลือกวิธีการค้นหา: ")
-    print("  1. พิมพ์ความสนใจ")
-    print("  2. พิมพ์ชื่อหนังสือ แล้วหาเล่มที่คล้ายกัน")
-    print("  0. ปิดโปรแกรม")
+    # สร้าง TF-IDF Metrix
+    vectorizer = TfidfVectorizer()
+    tfidf_metrix = vectorizer.fit_transform(df["content"])
 
-    choice = input("\nเลือก (0/1/2): ").strip()
+    print(f"\nโหลดข้อมูลหนังสือเกี่ยวกับ computer ทั้งหมด {len(df)} เล่ม!")
 
-    if choice == "0":
-        print("กำลังปิดโปรแกรม!")
-        break
-    elif choice == "1":
-        query = input("พิมพ์ความสนใจของคุณ: ").strip()
-        if not query:
-            print("กรุณาพิมพ์ความสนใจของคุณที่นี่ก่อนนะครับ >_< \n")
-            continue
-        results = recommend_by_interest(query)
+    print("-" * 50)
+    print("ระบบแนะนำหนังสือจากเว็บไซต์ 'naiin.com' ~~~")
+    print("-" * 50)
+    print("** พิมพ์ 'exit' เพื่อออก **")
+    print()
 
-        print(f"หนังสือแนะนำสำหรับ '{query}' 10 อันดับได้แก่")
-        print("-" * 50)
-        print_results(results)
-    elif choice == "2":
-        while True:
-            title = input("พิมพ์ชื่อหนังสือ (บางส่วนก็ได้): ").strip()
-            if not title:
-                print("กรุณาพิมพ์ชื่อหนังสือของคุณที่นี่ก่อนนะครับ!")
+    while True:
+        print("\nเลือกวิธีการค้นหา: ")
+        print("  1. พิมพ์ความสนใจ")
+        print("  2. พิมพ์ชื่อหนังสือ แล้วหาเล่มที่คล้ายกัน")
+        print("  0. ปิดโปรแกรม")
+
+        choice = input("\nเลือก (0/1/2): ").strip()
+
+        if choice == "0":
+            print("กำลังปิดโปรแกรม!")
+            break
+        elif choice == "1":
+            query = input("พิมพ์ความสนใจของคุณ: ").strip()
+            if not query:
+                print("กรุณาพิมพ์ความสนใจของคุณที่นี่ก่อนนะครับ >_< \n")
                 continue
+            results = recommend_by_interest(query)
 
-            # ค้นหาหนังสือที่ชื่อคล้ายกัน
-            matches = search_book(title)
-            if matches.empty:
-                print(f"ไม่พบหนังสือชื่อ '{title}' กรุณาลองใหม่")
-                continue
+            print(f"หนังสือแนะนำสำหรับ '{query}' 10 อันดับได้แก่")
+            print("-" * 50)
+            print_results(results)
+        elif choice == "2":
+            while True:
+                title = input("พิมพ์ชื่อหนังสือ (บางส่วนก็ได้): ").strip()
+                if not title:
+                    print("กรุณาพิมพ์ชื่อหนังสือของคุณที่นี่ก่อนนะครับ!")
+                    continue
 
-            print(f"พบหนังสือที่ตรงกับ '{title}' ทั้งหมด {len(matches)} เล่ม")
-            for i, row in matches.iterrows():
-                print(f"{i+1:2}. {row["title"]}")
+                # ค้นหาหนังสือที่ชื่อคล้ายกัน
+                matches = search_book(title)
+                if matches.empty:
+                    print(f"ไม่พบหนังสือชื่อ '{title}' กรุณาลองใหม่")
+                    continue
 
-            pick = input(
-                f"\nเลือกเล่มที่ต้องการ (1-{len(matches)}, n = พิมพ์ชื่อหนังสือใหม่): "
-            ).strip()
-            if pick.lower() == "n":
-                continue
-            elif not pick.isdigit() or not (1 <= int(pick) <= len(matches)):
-                print("เลือกไม่ถูกต้องครับ")
-                continue
+                print(f"พบหนังสือที่ตรงกับ '{title}' ทั้งหมด {len(matches)} เล่ม")
+                for i, row in matches.iterrows():
+                    print(f"{i+1:2}. {row["title"]}")
 
-            else:
-                select_title = matches.iloc[int(pick) - 1]["title"]
-                found_title, results = recommend_by_title(select_title)
-                print(f"หนังสือแนะนำสำหรับ '{found_title}' 10 อันดับได้แก่")
-                print_results(results)
-                break
+                pick = input(
+                    f"\nเลือกเล่มที่ต้องการ (1-{len(matches)}, n = พิมพ์ชื่อหนังสือใหม่): "
+                ).strip()
+                if pick.lower() == "n":
+                    continue
+                elif not pick.isdigit() or not (1 <= int(pick) <= len(matches)):
+                    print("เลือกไม่ถูกต้องครับ")
+                    continue
+
+                else:
+                    select_title = matches.iloc[int(pick) - 1]["title"]
+                    found_title, results = recommend_by_title(select_title)
+                    print(f"หนังสือแนะนำสำหรับ '{found_title}' 10 อันดับได้แก่")
+                    print_results(results)
+                    break
+"""
