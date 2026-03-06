@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 ระบบแนะนำหนังสือ naiin.com</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #1a1a2e; color: #eee; min-height: 100vh;
+    }
+
+    header {
+      background: #16213e; padding: 20px;
+      text-align: center; border-bottom: 2px solid #0f3460;
+    }
+    header h1 { font-size: 1.8rem; color: #e94560; }
+    header p { color: #aaa; margin-top: 5px; }
+
+    .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn {
+      flex: 1; padding: 12px; border: none; border-radius: 8px;
+      cursor: pointer; font-size: 1rem; font-weight: bold;
+      background: #16213e; color: #aaa; transition: all 0.2s;
+    }
+    .tab-btn.active { background: #e94560; color: white; }
+
+    .search-box {
+      background: #16213e; border-radius: 12px;
+      padding: 20px; margin-bottom: 20px;
+    }
+    .search-row { display: flex; gap: 10px; margin-bottom: 10px; }
+
+    input[type="text"] {
+      flex: 1; padding: 12px 16px;
+      background: #0f3460; border: 1px solid #e94560;
+      border-radius: 8px; color: #fff; font-size: 1rem;
+    }
+    input[type="text"]::placeholder { color: #888; }
+    input[type="text"]:focus { outline: none; border-color: #ff6b6b; }
+
+    button.search-btn {
+      padding: 12px 24px; background: #e94560;
+      border: none; border-radius: 8px;
+      color: white; font-size: 1rem; font-weight: bold;
+      cursor: pointer; transition: background 0.2s;
+    }
+    button.search-btn:hover { background: #c73652; }
+    button.search-btn:disabled { background: #555; cursor: not-allowed; }
+
+    /* =========================================================
+       Custom book dropdown (mode 2)
+    ========================================================= */
+    #book-list-wrap { display: none; margin-top: 12px; }
+    #book-list-label { color: #aaa; font-size: 0.9rem; margin-bottom: 8px; }
+
+    #book-list {
+      display: flex; flex-direction: column; gap: 8px;
+      max-height: 320px; overflow-y: auto;
+      border: 1px solid #0f3460; border-radius: 8px; padding: 8px;
+    }
+
+    .book-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 10px; border-radius: 8px;
+      cursor: pointer; transition: background 0.15s;
+      border: 1px solid transparent;
+    }
+    .book-option:hover { background: #0f3460; }
+    .book-option.selected {
+      background: #0f3460; border-color: #e94560;
+    }
+
+    .book-option img {
+      width: 45px; height: 60px;
+      object-fit: cover; border-radius: 4px;
+      background: #16213e; flex-shrink: 0;
+    }
+    .book-option-title {
+      font-size: 0.9rem; line-height: 1.4;
+    }
+
+    /* =========================================================
+       Results
+    ========================================================= */
+    .result-header { color: #aaa; margin-bottom: 15px; font-size: 0.95rem; }
+
+    .book-card {
+      display: flex; gap: 16px;
+      background: #16213e; border-radius: 12px;
+      padding: 16px; margin-bottom: 14px;
+      border: 1px solid #0f3460; transition: border-color 0.2s;
+    }
+    .book-card:hover { border-color: #e94560; }
+
+    .book-cover {
+      width: 80px; min-width: 80px; height: 110px;
+      border-radius: 6px; object-fit: cover; background: #0f3460;
+    }
+    .book-cover-placeholder {
+      width: 80px; min-width: 80px; height: 110px;
+      border-radius: 6px; background: #0f3460;
+      display: flex; align-items: center;
+      justify-content: center; font-size: 2rem;
+    }
+
+    .book-info { flex: 1; }
+    .book-rank { color: #e94560; font-weight: bold; margin-right: 6px; }
+    .book-title { font-size: 1rem; font-weight: bold; margin-bottom: 6px; }
+    .book-meta { color: #aaa; font-size: 0.88rem; margin-bottom: 3px; }
+    .book-price { color: #4caf50; font-weight: bold; }
+    .book-score { color: #ff9800; font-size: 0.85rem; }
+    .book-link { color: #4a9eff; font-size: 0.85rem; text-decoration: none; }
+    .book-link:hover { text-decoration: underline; }
+
+    .loading {
+      text-align: center; padding: 40px;
+      color: #aaa; font-size: 1.1rem;
+    }
+    .spinner {
+      display: inline-block; width: 30px; height: 30px;
+      border: 3px solid #444; border-top-color: #e94560;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin-right: 10px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 40px; color: #888; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📚 ระบบแนะนำหนังสือ naiin.com</h1>
+  <p>ค้นหาหนังสือที่เหมาะกับคุณด้วย TF-IDF + Cosine Similarity</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="setMode(1)">🔍 แนะนำตามความสนใจ</button>
+    <button class="tab-btn" onclick="setMode(2)">📖 แนะนำจากหนังสือที่สนใจ</button>
+  </div>
+
+  <div class="search-box">
+    <div class="search-row">
+      <input type="text" id="search-input" placeholder="เช่น python machine learning" />
+      <button class="search-btn" id="search-btn" onclick="handleSearch()">ค้นหา</button>
+    </div>
+
+    <!-- Custom book list (mode 2) -->
+    <div id="book-list-wrap">
+      <div id="book-list-label">เลือกหนังสือที่สนใจ:</div>
+      <div id="book-list"></div>
+    </div>
+  </div>
+
+  <div id="result-header" class="result-header"></div>
+  <div id="results"></div>
+
+</div>
+
+<script>
+  let currentMode = 1;
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i + 1 === mode);
+    });
+    const input = document.getElementById('search-input');
+    input.placeholder = mode === 1
+      ? 'เช่น python machine learning'
+      : 'พิมพ์ชื่อหนังสือ (บางส่วนก็ได้)';
+    document.getElementById('book-list-wrap').style.display = 'none';
+    document.getElementById('book-list').innerHTML = '';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('result-header').textContent = '';
+    input.value = '';
+    input.focus();
+  }
+
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSearch();
+  });
+
+  // debounce mode 2
+  let debounceTimer;
+  document.getElementById('search-input').addEventListener('input', () => {
+    if (currentMode !== 2) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(fetchBookSuggestions, 300);
+  });
+
+  async function handleSearch() {
+    const query = document.getElementById('search-input').value.trim();
+    if (!query) return;
+    if (currentMode === 1) {
+      await recommendByInterest(query);
+    } else {
+      await fetchBookSuggestions();
+    }
+  }
+
+  // =========================================================
+  // Mode 1
+  // =========================================================
+  async function recommendByInterest(query) {
+    setLoading(true);
+    document.getElementById('book-list-wrap').style.display = 'none';
+    try {
+      const res = await fetch('/recommend/interest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      document.getElementById('result-header').textContent =
+        `ผลลัพธ์สำหรับ "${query}" — พบ ${data.results.length} เล่ม`;
+      renderResults(data.results);
+    } catch {
+      showError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // =========================================================
+  // Mode 2 — fetch แล้วแสดง custom list พร้อมรูปปก
+  // =========================================================
+  async function fetchBookSuggestions() {
+    const q = document.getElementById('search-input').value.trim();
+    if (!q) {
+      document.getElementById('book-list-wrap').style.display = 'none';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+
+      const list = document.getElementById('book-list');
+      list.innerHTML = '';
+
+      if (!data.books || data.books.length === 0) {
+        document.getElementById('book-list-wrap').style.display = 'none';
+        return;
+      }
+
+      data.books.forEach(book => {
+        const item = document.createElement('div');
+        item.className = 'book-option';
+        item.innerHTML = `
+          <img src="${book.img_url || ''}"
+               onerror="this.src=''; this.style.background='#0f3460'; this.innerHTML='📖';"
+               alt="${book.title}">
+          <span class="book-option-title">${book.title}</span>
+        `;
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.book-option').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          recommendByTitle(book.title);
+        });
+        list.appendChild(item);
+      });
+
+      document.getElementById('book-list-wrap').style.display = 'block';
+
+      // ถ้ามีแค่เล่มเดียวแนะนำเลย
+      if (data.books.length === 1) {
+        recommendByTitle(data.books[0].title);
+      }
+    } catch {}
+  }
+
+  async function recommendByTitle(title) {
+    if (!title) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/recommend/title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      const data = await res.json();
+      if (data.error) { showError(data.error); return; }
+      document.getElementById('result-header').textContent =
+        `หนังสือที่คล้ายกับ "${data.found_title}" — พบ ${data.results.length} เล่ม`;
+      renderResults(data.results);
+    } catch {
+      showError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // =========================================================
+  // Render results
+  // =========================================================
+  function renderResults(results) {
+    const container = document.getElementById('results');
+    if (!results.length) {
+      container.innerHTML = '<div class="empty">❌ ไม่พบหนังสือที่เกี่ยวข้อง</div>';
+      return;
+    }
+    container.innerHTML = results.map((book, i) => `
+      <div class="book-card">
+        ${book.img_url
+          ? `<img class="book-cover" src="${book.img_url}" alt="${book.title}" onerror="this.outerHTML='<div class=book-cover-placeholder>📖</div>'">`
+          : `<div class="book-cover-placeholder">📖</div>`}
+        <div class="book-info">
+          <div class="book-title"><span class="book-rank">${i+1}.</span>${book.title}</div>
+          <div class="book-meta">✍️ ${book.author}</div>
+          <div class="book-meta">🏢 ${book.publisher}</div>
+          <div class="book-meta">
+            <span class="book-price">💰 ${book.price} บาท</span>
+            &nbsp;|&nbsp;
+            <span class="book-score">📊 ${book.score}</span>
+          </div>
+          <a class="book-link" href="${book.url}" target="_blank">🔗 ดูรายละเอียด</a>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function setLoading(show) {
+    document.getElementById('search-btn').disabled = show;
+    if (show) {
+      document.getElementById('results').innerHTML =
+        '<div class="loading"><span class="spinner"></span>กำลังค้นหา...</div>';
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('results').innerHTML = `<div class="empty">❌ ${msg}</div>`;
+  }
+</script>
+
+</body>
+</html>
