@@ -27,7 +27,7 @@ def recommend_by_interest(query, df, vectorizer, tfidf_metrix, top_n=10):
 
 # แนะนำตามหนังสือที่สนใจ
 def recommend_by_title(title, df, vectorizer, tfidf_metrix, top_n=10):
-    matches = df[df["title"].str.contains(title, case=False, na=False)]
+    matches = df[df["title"].str.contains(title, case=False, na=False, regex=False)]
 
     if matches.empty:
         return None, None
@@ -74,15 +74,16 @@ def print_results(results):
 
 def search_book(title, df):
     # ค้นหาหนังสือจากชื่อที่คล้ายกัน return dataframe
-    matches = df[df["title"].str.contains(title, case=False, na=False)]
+    matches = df[df["title"].str.contains(title, case=False, na=False, regex=False)]
     return matches.reset_index()
 
 
-"""
+
+
+# -- Main --
 if __name__ == "__main__":
     # โหลดข้อมูล
-    # df = pd.read_csv("data/books_cleaned.csv")
-    df = pd.read_csv(os.path.join("data", "books_cleaned.csv"))
+    df = pd.read_csv(os.path.join("data", "ebooks_cleaned.csv"))
     # รวม title + description เป็น text เดียว
     df["content"] = df["title"] + " " + df["description"]
     df["content"] = df["content"].fillna("")
@@ -91,12 +92,11 @@ if __name__ == "__main__":
     vectorizer = TfidfVectorizer()
     tfidf_metrix = vectorizer.fit_transform(df["content"])
 
-    print(f"\nโหลดข้อมูลหนังสือเกี่ยวกับ computer ทั้งหมด {len(df)} เล่ม!")
+    print(f"\nโหลดข้อมูลหนังสือทั้งหมด {len(df)} เล่ม!")
 
     print("-" * 50)
     print("ระบบแนะนำหนังสือจากเว็บไซต์ 'naiin.com' ~~~")
     print("-" * 50)
-    print("** พิมพ์ 'exit' เพื่อออก **")
     print()
 
     while True:
@@ -105,11 +105,11 @@ if __name__ == "__main__":
         print("  2. พิมพ์ชื่อหนังสือ แล้วหาเล่มที่คล้ายกัน")
         print("  0. ปิดโปรแกรม")
 
-        choice = input("\nเลือก (0/1/2): ").strip()
+        choice = input("\n(1, 2 or 0): ").strip()
 
         if choice == "0":
             print("กำลังปิดโปรแกรม!")
-            break
+            exit()
         elif choice == "1":
             query = input("พิมพ์ความสนใจของคุณ: ").strip()
             if not query:
@@ -152,4 +152,3 @@ if __name__ == "__main__":
                     print(f"หนังสือแนะนำสำหรับ '{found_title}' 10 อันดับได้แก่")
                     print_results(results)
                     break
-"""

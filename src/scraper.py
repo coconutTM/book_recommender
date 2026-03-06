@@ -37,6 +37,7 @@ def get_all_book_links(page, category_list):
                 page.wait_for_selector("a.item-img-block", timeout=60000)
             except:
                 retry += 1
+                builtins.print(f"retry = {retry}")
                 builtins.print("รอ 60 วิแล้วยังไม่เจอ element หยุด")
                 if retry >= 20:
                     builtins.print("wifi หรืออะไรของมึงเนี่ย")
@@ -82,6 +83,7 @@ def scrape_book_detail(page, url):
             page.wait_for_selector("h1.title-topic", timeout=60000)
         except:
             retry += 1
+            builtins.print(f"retry = {retry}")
             builtins.print(f"รอ 60 วินาทีแล้วโหลดไม่ได้: {url}")
             if retry >= 20:
                 builtins.print("wifi หรืออะไรของมึงเนี่ย")
@@ -118,6 +120,12 @@ def scrape_book_detail(page, url):
             lines = raw.split("\n")
             lines = [l for l in lines if not l.strip().startswith("รายละเอียด")]
             description = "\n".join(lines).strip()
+        
+        # url to picture
+        img_url = ""
+        el = page.query_selector("img.img-relative")
+        if el:
+            img_url = el.get_attribute("src")
 
         result = {
             "title": title,
@@ -126,6 +134,7 @@ def scrape_book_detail(page, url):
             "price": price,
             "description": description,
             "url": url,
+            "img_url": img_url,
         }
         return result
 
@@ -144,7 +153,7 @@ if __name__ == "__main__":
 
     # get all book link
     file = os.path.join("data", "ebook_links.txt")
-    category_list = ["16", "2", "15", "11"]
+    category_list = ["16"]
 
     if os.path.exists(file):
         builtins.print(f"Links loading from file {file}")
@@ -155,9 +164,9 @@ if __name__ == "__main__":
         with open(file, "w") as f:
             for link in ebook_links:
                 f.write(link + "\n")
-        builtins.print(f"Creating file '{file}'")
+        builtins.print(f"Creating file '{os.path.basename(file)}'")
 
-    builtins.print(f"\nรวม {len(ebook_links)} ลิงก์ เริ่ม scraping เลยมั้ย?")
+    builtins.print(f"\nรวม {len(ebook_links)} ลิงก์ เริ่ม scrape เลยมั้ย?")
     choice = input("Y/n: ")
     if choice.lower() == "y":
         # scraping book
@@ -169,12 +178,14 @@ if __name__ == "__main__":
                 all_books_details.append(book)
             page.wait_for_timeout(1000)
     else:
+        playwright.stop()
+        sb.driver.quit()
         exit()
 
     df = pd.DataFrame(all_books_details)
     # df.to_csv("data/books.csv", index=False, encoding="utf-8-sig")
     df.to_csv(os.path.join("data", "ebooks.csv"), index=False)
-    builtins.print(f"\nบันทึกแล้ว {len(df)} เล่ม --> books.csv")
+    builtins.print(f"\nบันทึกแล้ว {len(df)} เล่ม --> ebooks.csv")
 
     playwright.stop()
     sb.driver.quit()

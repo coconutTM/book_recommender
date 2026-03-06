@@ -35,7 +35,7 @@ def clean(file_name):
 
 if __name__ == "__main__":
     # df = pd.read_csv("books.csv")
-    df = pd.read_csv(os.path.join("data", "books.csv"))
+    df = pd.read_csv(os.path.join("data", "ebooks.csv"))
     before_clean = len(df)
     print(f"ก่อน clean: {len(df)} แถว")
 
@@ -57,6 +57,6 @@ if __name__ == "__main__":
     print(f"หลัง clean: {len(df)} แถว")
     print(f"ลบออกไป: {before_clean - len(df)} แถว")
 
-    # df.to_csv("books_cleaned.csv", index=False, encoding="utf-8-sig")
-    df.to_csv(os.path.join("data", "books_cleaned.csv"), index=False)
-    print("บันทึกแล้ว --> books_cleaned.csv")
+    # df.to_csv("ebooks_cleaned.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(os.path.join("data", "ebooks_cleaned.csv"), index=False)
+    print("บันทึกแล้ว --> ebooks_cleaned.csv")
