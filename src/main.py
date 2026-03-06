@@ -6,7 +6,6 @@ from recommender import (
     search_book,
 )
 from cleanup import clean
-from download_images import download
 
 import os, time
 import glob
