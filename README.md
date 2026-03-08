@@ -55,30 +55,12 @@ playwright install chromium
 ---
 ## วิธีใช้งาน
 
-### สามารถรัน main.py ได้เลย 
+### รัน Script 
 ```bash
 python src/main.py
 ```
-หรือจะรันไฟล์แยกแบบนี้ก็ได้
-### ขั้นที่ 1: ดึงข้อมูลหนังสือ
+### สามารถรันระบบแนะนำหนังสือแบบ localhost
 ```bash
-python src/scraper.py
-```
-จะได้ไฟล์ `data/ebook_links.txt`, `data/ebooks.csv`
-
-### ขั้นที่ 2: ทำความสะอาดข้อมูล
-```bash
-python src/cleaner.py
-```
-จะได้ไฟล์ `data/ebooks_cleaned.csv`
-
-### ขั้นที่ 3: รันระบบแนะนำหนังสือ
-**3.1** CLI
-```bash
-python src/recommender.py
-```
-**3.2** website
-```
 uvicorn src.api:app --reload
 ```
 จากนั้นเปิด http://localhost:8000 
