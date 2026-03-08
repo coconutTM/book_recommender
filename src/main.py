@@ -223,7 +223,7 @@ if __name__ == "__main__":
                     print(f"{i + 1}. {os.path.basename(file)}")
                 sel_csv = int(input("เลือกไฟล์ที่: "))
                 file_name = os.path.basename(all_csv_files[sel_csv - 1])
-                clean_file = clean(file_name) # เรียก function ทำความสะอาบข้อมูล
+                clean(file_name) # เรียก function ทำความสะอาบข้อมูล
 
         elif mode == "0" or mode.lower() == "exit":
             exit()
